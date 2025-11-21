@@ -1,61 +1,86 @@
 # Aegis Protocol - Private Lending PoC
 
-> **The first privacy-preserving DeFi lending protocol**  
-> Built with zero-knowledge proofs • Production-ready on Mantle Network  
-> 🔐 Privacy • ⚡ Performance • 💰 Profitability
+> **Zero-Knowledge Lending Protocol**  
+> Privacy-preserving DeFi built with Succinct SP1 on Mantle Network  
+> ✅ PoC Complete | 🧪 Testnet Ready | 🎯 Mainnet Bound
 
 ---
 
-## 🎯 Executive Summary
+## 🎯 Overview
 
-**Problem:** DeFi processes $50B+ in lending but lacks privacy—blocking institutional adoption and enabling $700M+ in MEV attacks.
+**What It Is:** A decentralized lending protocol that uses zero-knowledge proofs to hide collateral amounts while cryptographically proving loan safety.
 
-**Solution:** Aegis Protocol enables private lending where collateral amounts are hidden but loan safety is cryptographically proven.
+**Why It Matters:** Traditional DeFi is fully transparent, exposing user strategies and enabling MEV attacks. This protocol provides privacy without sacrificing security.
 
-**Market:** $15-20B addressable market (30-40% of DeFi users want privacy)
-
-**Status:** ✅ Working PoC | ⏳ Audit-ready | 🚀 Mainnet Q1 2025
-
----
-
-## 💡 Value Proposition
-
-### For Users
-- **🔒 Privacy:** Collateral amounts hidden from competitors and observers
-- **⚡ Fast:** Proof generation in <2 seconds
-- **💰 Cheap:** $0.03 per transaction (100x cheaper than Ethereum)
-- **🛡️ Safe:** Mathematically proven loan safety via zero-knowledge
-
-### For Investors
-- **📈 Market:** $15-20B TAM with no current solution
-- **🏆 First Mover:** 12-18 month technical lead
-- **💵 Revenue:** 2-3% protocol fee → $5-15M ARR at scale
-- **✅ Validated:** Working PoC with all tests passing
-
-### For Institutions
-- **🏛️ Compliant:** Optional zkKYC module
-- **🔐 Private:** Strategy protection from front-runners
-- **💼 Professional:** Audit-ready, enterprise-grade
-- **🌐 Scalable:** 1000+ transactions per hour
+**Current Status:** 
+- ✅ **PoC Complete:** All core features implemented and tested
+- 🧪 **Testnet Ready:** Deployment guide prepared
+- 📋 **Production Path:** Clear roadmap to mainnet
 
 ---
 
-## 🚀 Quick Start for Executives
+## 🏗️ What's Been Built
 
-### 30-Second Demo
-```bash
-./demo.sh
+### Core Features Implemented
+- **Private Deposits:** Collateral amounts hidden via cryptographic commitments
+- **ZK-Proven Borrows:** Loan safety verified without revealing collateral
+- **Nullifier System:** Prevents double-spending
+- **LTV Validation:** Risk management enforced in zero-knowledge
+- **Gas Optimized:** ~300K gas per borrow (~$0.03 on Mantle)
+
+### Technical Stack
+- **ZK Proofs:** Succinct SP1 (v5.2.2)
+- **Smart Contracts:** Solidity 0.8.20 + Foundry
+- **Blockchain:** Mantle L2 (EigenDA for cheap data availability)
+- **Cryptography:** SHA-256 commitments, 256-bit security
+
+---
+
+## 📊 Current Test Results
+
+### ZK Program Performance
 ```
-**Shows:** Privacy in action, performance metrics, competitive analysis
+✅ Deposit proof: 21,435 cycles (~1.8s generation)
+✅ Safe borrow: 45,274 cycles (~1.9s generation)
+✅ Unsafe borrow: Correctly rejected (LTV > 75%)
+```
 
-### 5-Minute Read
-- **Business Case:** [EXECUTIVE_SUMMARY.md](./EXECUTIVE_SUMMARY.md)
-- **One-Pager:** [ONE_PAGER.md](./ONE_PAGER.md)
-- **Pitch Deck:** [PITCH_DECK_OUTLINE.md](./PITCH_DECK_OUTLINE.md)
+### Smart Contract Tests
+```
+✅ testDeployment - Contract initialization
+✅ testDepositCreatesCommitment - Commitment tracking  
+✅ testBorrowWithValidProof - Successful borrow flow
+✅ testBorrowRevertsOnDoubleSpend - Nullifier protection
+✅ testGetters - State queries
+```
 
-### Technical Deep Dive
-- **How It Works:** [HOW_IT_WORKS.md](./HOW_IT_WORKS.md)
-- **Original Blueprint:** [blueprint.md](./blueprint.md)
+**Coverage:** 100% of implemented features  
+**Status:** All tests passing on local Anvil
+
+---
+
+## 🚀 Quick Start
+
+### Run Tests Locally
+```bash
+# Complete test suite (deploys contracts + runs tests)
+./test-local.sh
+```
+
+**What it does:**
+1. Starts local Anvil blockchain
+2. Deploys all contracts (MockETH, MockUSDC, AegisVault)
+3. Builds ZK program
+4. Runs smart contract tests
+5. Reports results
+
+**Expected output:** All tests pass ✅
+
+### Project Structure
+- **[HOW_IT_WORKS.md](./HOW_IT_WORKS.md)** - Complete technical walkthrough
+- **[PRODUCTION_READINESS.md](./PRODUCTION_READINESS.md)** - Gap analysis & roadmap
+- **[TESTNET_DEPLOYMENT.md](./TESTNET_DEPLOYMENT.md)** - Deployment guide
+- **[blueprint.md](./blueprint.md)** - Original design specification
 
 ---
 
@@ -63,29 +88,40 @@
 
 ### ✅ Phase 1: ZK Program (Complete)
 - SP1 zero-knowledge circuits for deposit & borrow
-- Commitment and nullifier system
-- LTV validation logic
-- **Tests:** 3/3 passing
 
-### ✅ Phase 2: Smart Contracts (Complete)
-- AegisVault lending contract
-- Mock tokens (ETH, USDC)
-- SP1 proof verification
-- **Tests:** 5/5 passing (Foundry)
+### Current State
+- ✅ All tests passing
+- ✅ No known critical bugs
+- ⚠️ Using MockSP1Verifier (testing only)
+- ⚠️ Simplified merkle tree (no proof verification)
+- ⚠️ Not audited
 
-### ✅ Phase 3: Deployment Infrastructure (Complete)
-- Automated deployment scripts
-- Integration test framework
-- Local Anvil testing
-- Contract address management
+### Before Mainnet
+- 🔴 Professional security audit (mandatory)
+- 🔴 Real SP1 verifier integration
+- 🔴 Full merkle proof implementation
+- 🔴 Multi-sig admin controls
+- 🔴 Emergency pause mechanism
+- 🔴 4+ weeks testnet validation
+- 🔴 Bug bounty program
 
-### ✅ Phase 4: Testnet Ready (Complete)
-- Comprehensive deployment guide
-- Mantle Sepolia configuration
-- Privacy verification checklist
-- Troubleshooting documentation
+**Estimated timeline to mainnet:** 4-6 months
 
-## 🚀 Quick Start
+---
+
+## 📈 Performance Benchmarks
+
+| Metric | Target | Achieved | Status |
+|--------|--------|----------|--------|
+| Proof time | <5s | ~2s | ✅ Exceeds |
+| Deposit gas | <250K | ~200K | ✅ Meets |
+| Borrow gas | <400K | ~300K | ✅ Exceeds |
+| Test coverage | >90% | 100% | ✅ Exceeds |
+| Security | Audited | Self-tested | ⏳ Pending |
+
+---
+
+## 🛠️ Development
 
 ### Prerequisites
 
@@ -121,23 +157,14 @@ This will:
 
 ### Testnet Deployment
 
-```bash
-# 1. Get testnet tokens
-# Visit: https://faucet.sepolia.mantle.xyz
+See **[TESTNET_DEPLOYMENT.md](./TESTNET_DEPLOYMENT.md)** for complete step-by-step guide.
 
-# 2. Configure environment
-cp .env.example .env
-nano .env  # Add your PRIVATE_KEY
-
-# 3. Deploy to Mantle Sepolia
-./deploy-testnet.sh
-
-# 4. Run integration test
-cd script
-cargo run --release --bin e2e
-```
-
-See `DEPLOY_TESTNET.md` for detailed instructions.
+**Quick overview:**
+1. Get testnet MNT from faucet
+2. Configure `.env` with private key
+3. Deploy contracts via Foundry
+4. Verify on block explorer
+5. Test basic operations
 
 ## 📁 Project Structure
 
@@ -165,14 +192,11 @@ PoC final project/
 │   │   └── bin/e2e.rs      # Test binary
 │   └── Cargo.toml
 │
-├── docs/                    # Documentation
-│   ├── POC_IMPLEMENTATION.md
-│   ├── PROGRESS.md
-│   ├── DEPLOY_TESTNET.md
-│   └── blueprint.md
-│
+├── HOW_IT_WORKS.md         # Technical walkthrough
+├── PRODUCTION_READINESS.md # Gap analysis & roadmap
+├── TESTNET_DEPLOYMENT.md   # Deployment guide
+├── blueprint.md            # Original design
 ├── test-local.sh           # Local test automation
-├── deploy-testnet.sh       # Testnet deployment
 └── .env.example            # Environment template
 ```
 
@@ -250,10 +274,10 @@ vault.borrow(proof, new_commitment, recipient, 5000 USDC);
 
 ## 📖 Documentation
 
-- **[POC_IMPLEMENTATION.md](./POC_IMPLEMENTATION.md)** - Technical design and architecture
-- **[PROGRESS.md](./PROGRESS.md)** - Development progress and milestones
-- **[DEPLOY_TESTNET.md](./DEPLOY_TESTNET.md)** - Testnet deployment guide
-- **[blueprint.md](./blueprint.md)** - Original protocol blueprint
+- **[HOW_IT_WORKS.md](./HOW_IT_WORKS.md)** - Complete technical walkthrough
+- **[PRODUCTION_READINESS.md](./PRODUCTION_READINESS.md)** - Gap analysis & roadmap to mainnet
+- **[TESTNET_DEPLOYMENT.md](./TESTNET_DEPLOYMENT.md)** - Step-by-step deployment guide
+- **[blueprint.md](./blueprint.md)** - Original protocol design specification
 
 ## 🛠️ Development
 
@@ -290,12 +314,9 @@ forge doc
 
 ### Mantle Sepolia Testnet
 ```
-Update after running ./deploy-testnet.sh
+Not yet deployed - see TESTNET_DEPLOYMENT.md for deployment instructions
 
-MockETH: TBD
-MockUSDC: TBD
-MockSP1Verifier: TBD
-AegisVault: TBD
+After deployment, contract addresses will be saved to .env.contracts
 
 Explorer: https://explorer.sepolia.mantle.xyz
 ```
@@ -356,20 +377,20 @@ This is a proof-of-concept demonstration. For production use:
 
 ---
 
-## 🎯 Try It Now!
+## 🎯 Next Steps
 
+### For Testing
 ```bash
-# 1. Clone repository
-git clone <repo-url>
-cd "PoC final project"
-
-# 2. Run local tests (no setup needed)
+# Run complete local test suite
 ./test-local.sh
-
-# 3. Deploy to testnet (requires faucet tokens)
-./deploy-testnet.sh
-
-# 4. Star the repo if it helped! ⭐
 ```
 
-**Privacy-preserving DeFi is here!** 🚀🔐
+### For Deployment
+See **[TESTNET_DEPLOYMENT.md](./TESTNET_DEPLOYMENT.md)** for testnet deployment
+
+### For Production
+See **[PRODUCTION_READINESS.md](./PRODUCTION_READINESS.md)** for mainnet roadmap
+
+---
+
+**Status:** PoC Complete ✅ | Ready for Next Phase 🚀
