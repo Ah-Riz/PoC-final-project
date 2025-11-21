@@ -3,6 +3,17 @@ name = "zk-script"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "e2e"
+path = "src/bin/e2e.rs"
+
 [dependencies]
 sp1-sdk = "5.2.2"
 serde = { version = "1.0", features = ["derive"] }
+ethers = "2.0"
+tokio = { version = "1", features = ["full"] }
+hex = "0.4"
+dotenv = "0.15"
+
+[build-dependencies]
+sp1-build = "5.2.2"
