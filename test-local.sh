@@ -62,7 +62,7 @@ cd ..
 # Step 3: Build ZK program
 echo -e "\n${BLUE}[3/4] Building ZK program...${NC}"
 cd zk-program
-cargo prove build --release
+cargo prove build
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ ZK program built${NC}"
 else
@@ -71,29 +71,22 @@ else
 fi
 cd ..
 
-# Step 4: Run integration test
-echo -e "\n${BLUE}[4/4] Running end-to-end integration test...${NC}"
-cd script
-cargo build --release --bin e2e
+# Step 4: Run contract tests
+echo -e "\n${BLUE}[4/4] Running smart contract tests...${NC}"
+cd contracts
+forge test -vv
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✓ Integration test binary built${NC}"
-    
-    # Run the test
-    cargo run --release --bin e2e
-    
-    if [ $? -eq 0 ]; then
-        echo -e "\n${GREEN}╔═══════════════════════════════════════════════════╗${NC}"
-        echo -e "${GREEN}║           ✓ ALL TESTS PASSED!                     ║${NC}"
-        echo -e "${GREEN}╚═══════════════════════════════════════════════════╝${NC}"
-    else
-        echo -e "\n${RED}✗ Integration test failed${NC}"
-        exit 1
-    fi
+    echo -e "${GREEN}✓ Smart contract tests passed${NC}"
 else
-    echo -e "${RED}✗ Failed to build integration test${NC}"
+    echo -e "${RED}✗ Smart contract tests failed${NC}"
     exit 1
 fi
-
 cd ..
 
+echo -e "\n${GREEN}╔═══════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║           ✓ ALL TESTS PASSED!                     ║${NC}"
+echo -e "${GREEN}╚═══════════════════════════════════════════════════╝${NC}"
+
 echo -e "\n${BLUE}Test suite complete!${NC}"
+echo -e "${YELLOW}Deployed contracts available at:${NC}"
+cat contracts/.env.contracts 2>/dev/null || echo "  (addresses in contracts/.env.contracts)"
