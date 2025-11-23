@@ -4,7 +4,7 @@
 
 ### 1. Fast Validation ⚡ **RECOMMENDED** (~5 seconds)
 ```bash
-cd script && cargo run --release fast
+cd script && cargo run --release --bin zk-script fast
 ```
 **What it does:**
 - ✅ Executes ZK program (no proof generation)
@@ -46,7 +46,7 @@ cd script && cargo run --release fast
 
 ### 3. Groth16 Proof Generation (On-Chain Ready)
 ```bash
-cd script && cargo run --release groth16
+cd script && cargo run --release --bin zk-script groth16
 ```
 **Why it's slow:**
 - First time: Downloads SP1 recursive circuits (~5-10 min)
@@ -94,32 +94,32 @@ cd script && cargo run --release groth16
 #### 4. Real SP1 Verifier Integration ✅
 - ✅ Deployed in fork testing
 - ✅ Contract tests pass with real verifier
-- ✅ Gas costs measured: ~280K per verification
 
 ---
 
-## 🚀 Recommended Workflow
+## Recommended Workflow
 
-### For Quick Development Testing:
+### For Development:
 ```bash
-# 1. Fast validation (5 seconds)
-cd script && cargo run --release fast
-
+# Use fast validation (5 seconds)
+cd script && cargo run --release --bin zk-script fast
+```
 # 2. Contract tests with real verifier (2 minutes)
 ./test-local.sh --fork
 ```
 
-### For Production Deployment Prep:
+### For Production Proofs:
 ```bash
-# 3. Generate real Groth16 proofs (15 min first time)
-cd script && cargo run --release groth16
-
+# Generate Groth16 proofs (15 min first time, then 5 min)
+cd script && cargo run --release --bin zk-script groth16
+```
 # 4. Test proofs on-chain
 # (use generated .bin files with contracts)
 ```
 
 ---
 
+## Performance Summary
 ## 📊 Performance Summary
 
 ### Execution Performance ✅ VERIFIED

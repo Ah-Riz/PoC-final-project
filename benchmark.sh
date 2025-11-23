@@ -25,43 +25,43 @@ case $choice in
     1)
         echo -e "\n${YELLOW}Running Fast Validation (No Proof Generation)...${NC}\n"
         cd script
-        cargo run --release fast
+        cargo run --release --bin zk-script fast
         ;;
     2)
         echo -e "\n${YELLOW}Running Basic Tests (With Proofs)...${NC}\n"
         cd script
-        cargo run --release
+        cargo run --release --bin zk-script
         ;;
     3)
         echo -e "\n${YELLOW}Generating Groth16 Proofs (On-Chain Ready)...${NC}\n"
         echo -e "${BLUE}⚠️  First time setup takes 10-15 minutes${NC}"
         echo -e "${BLUE}    Subsequent runs will be much faster (~5 min)${NC}\n"
         cd script
-        cargo run --release groth16
+        cargo run --release --bin zk-script groth16
         ;;
     4)
         echo -e "\n${YELLOW}Running Performance Benchmarks...${NC}\n"
         cd script
-        cargo run --release benchmark
+        cargo run --release --bin zk-script benchmark
         ;;
     5)
         echo -e "\n${YELLOW}Running Stress Test (10 users)...${NC}\n"
         cd script
-        cargo run --release stress
+        cargo run --release --bin zk-script stress
         ;;
     6)
         echo -e "\n${YELLOW}Running Full Test Suite (this will take a while)...${NC}\n"
         cd script
         echo "Step 1/5: Fast Validation"
-        cargo run --release fast
+        cargo run --release --bin zk-script fast
         echo -e "\n${BLUE}Step 2/5: Basic Tests${NC}"
-        cargo run --release
+        cargo run --release --bin zk-script
         echo -e "\n${BLUE}Step 3/5: Groth16 Proofs${NC}"
-        cargo run --release groth16
+        cargo run --release --bin zk-script groth16
         echo -e "\n${BLUE}Step 4/5: Benchmarks${NC}"
-        cargo run --release benchmark
+        cargo run --release --bin zk-script benchmark
         echo -e "\n${BLUE}Step 5/5: Stress Test${NC}"
-        cargo run --release stress
+        cargo run --release --bin zk-script stress
         ;;
     *)
         echo "Invalid choice"
