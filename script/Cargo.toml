@@ -7,6 +7,10 @@ edition = "2021"
 name = "e2e"
 path = "src/bin/e2e.rs"
 
+[[bin]]
+name = "generate_proof"
+path = "src/bin/generate_proof.rs"
+
 [dependencies]
 sp1-sdk = "5.2.2"
 serde = { version = "1.0", features = ["derive"] }
