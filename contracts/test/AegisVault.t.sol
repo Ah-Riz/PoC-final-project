@@ -49,9 +49,9 @@ contract AegisVaultTest is Test {
         vault.fundVault(1000000e6);
     }
 
-    function testDeployment() public {
-        assertEq(address(vault.collateralToken()), address(collateral));
-        assertEq(address(vault.debtToken()), address(debt));
+    function testDeployment() public view {
+        assertEq(address(vault.COLLATERAL_TOKEN()), address(collateral));
+        assertEq(address(vault.DEBT_TOKEN()), address(debt));
         assertEq(vault.owner(), owner);
     }
 
@@ -102,6 +102,8 @@ contract AegisVaultTest is Test {
             nullifier,
             newCommitment,
             bob,
+            // Safe cast: borrowAmount is within uint128 range for testing
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint128(borrowAmount),
             1 // is_valid
         );
@@ -185,6 +187,8 @@ contract AegisVaultTest is Test {
         
         // Copy amount as u128 (bytes 84-99, little-endian like Rust)
         for (uint i = 0; i < 16; i++) {
+            // Safe cast: extracting single byte from amount
+            // forge-lint: disable-next-line(unsafe-typecast)
             result[84 + i] = bytes1(uint8(amount >> (8 * i)));
         }
         

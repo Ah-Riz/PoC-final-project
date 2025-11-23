@@ -24,12 +24,19 @@ struct TransferOutput {
 }
 
 fn main() {
+    // Load .env file to get SP1_PROVER and SP1_PRIVATE_KEY
+    dotenvy::dotenv().ok();
+    
     utils::setup_logger();
 
     println!("\n========================================");
     println!("  Private Transfer - ZK Proof Demo");
     println!("  Fast Execution + Groth16 Proof");
     println!("========================================\n");
+
+    // Check prover mode
+    let prover_mode = std::env::var("SP1_PROVER").unwrap_or_else(|_| "mock".to_string());
+    println!("🔧 Prover Mode: {}\n", prover_mode);
 
     let client = ProverClient::from_env();
     let (pk, vk) = client.setup(ELF);
@@ -102,8 +109,8 @@ fn main() {
 
     assert_eq!(result2.is_valid, 0, "Insufficient balance should fail");
 
-    // Test 3: Generate real Groth16 proof
-    println!("\n[Test 3/3] Generate Groth16 Proof (On-Chain Ready)");
+    // Test 3: Generate real Groth16 proof using SP1 Network
+    println!("\n[Test 3/3] Generate Groth16 Proof (SP1 Network)");
     println!("-----------------------------------");
     
     let transfer3 = TransferInput {
@@ -122,12 +129,13 @@ fn main() {
 
     println!("  💸 Transfer: 250 tokens");
     println!("  📝 Memo: \"Private transfer with ZK proof!!\"");
-    println!("  ⚡ Using already downloaded Groth16 circuits");
-    println!("  ⏱️  Expected time: ~3-5 seconds\n");
+    println!("  🌐 Using SP1 Network Prover (cloud-based)");
+    println!("  ⏱️  Expected time: ~30-60 seconds\n");
 
     let start = Instant::now();
     
-    // Generate Groth16 proof
+    // Generate Groth16 proof using SP1 Network
+    println!("  🔄 Submitting to SP1 Network...");
     let groth16_proof = client.prove(&pk, &stdin3)
         .groth16()
         .run()
@@ -163,6 +171,6 @@ fn main() {
     println!("  ✅ Balance validation in ZK");
     println!("  ✅ Transfer hash commitment");
     println!("  ✅ Real Groth16 proofs (384 bytes)");
-    println!("  ✅ Fast execution (<20ms)");
+    println!("  ✅ Fast execution (<60s with network prover)");
     println!("  ✅ Ready for on-chain verification\n");
 }

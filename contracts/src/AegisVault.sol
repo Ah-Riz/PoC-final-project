@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@sp1-contracts/ISP1Verifier.sol";
 
 /// @title AegisVault - Private Lending Protocol with ZK Proofs
@@ -14,7 +16,7 @@ contract AegisVault {
     // ============ State Variables ============
 
     /// @notice SP1 proof verifier contract
-    ISP1Verifier public immutable verifier;
+    ISP1Verifier public immutable VERIFIER;
 
     /// @notice Verification key for deposit proofs
     bytes32 public depositVkey;
@@ -23,10 +25,10 @@ contract AegisVault {
     bytes32 public borrowVkey;
 
     /// @notice Collateral token (e.g., mETH)
-    IERC20 public immutable collateralToken;
+    IERC20 public immutable COLLATERAL_TOKEN;
 
     /// @notice Debt token (e.g., USDC)
-    IERC20 public immutable debtToken;
+    IERC20 public immutable DEBT_TOKEN;
 
     /// @notice Current Merkle root of all commitments
     bytes32 public merkleRoot;
@@ -36,6 +38,9 @@ contract AegisVault {
 
     /// @notice Array of all commitments
     bytes32[] public commitments;
+
+    /// @notice Mapping of used signatures (prevents replay attacks)
+    mapping(bytes32 => bool) public usedSignatures;
 
     /// @notice Contract owner
     address public owner;
@@ -48,10 +53,19 @@ contract AegisVault {
     );
 
     event Borrow(
-        bytes32 indexed nullifier,
+        bytes32 indexed nullifierHash,
         bytes32 indexed newCommitment,
         address indexed recipient,
-        uint256 amount,
+        uint256 borrowAmount,
+        uint256 timestamp
+    );
+
+    event BorrowViaRelayer(
+        bytes32 indexed nullifierHash,
+        bytes32 indexed newCommitment,
+        address indexed actualUser,
+        address relayer,
+        uint256 borrowAmount,
         uint256 timestamp
     );
 
@@ -64,12 +78,18 @@ contract AegisVault {
     error NullifierAlreadySpent();
     error InsufficientLiquidity();
     error InvalidCommitment();
+    error InvalidSignature();
+    error SignatureAlreadyUsed();
 
     // ============ Modifiers ============
 
     modifier onlyOwner() {
-        if (msg.sender != owner) revert UnauthorizedCaller();
+        _onlyOwner();
         _;
+    }
+    
+    function _onlyOwner() internal view {
+        if (msg.sender != owner) revert UnauthorizedCaller();
     }
 
     // ============ Constructor ============
@@ -81,11 +101,11 @@ contract AegisVault {
         address _collateralToken,
         address _debtToken
     ) {
-        verifier = ISP1Verifier(_verifier);
+        VERIFIER = ISP1Verifier(_verifier);
         depositVkey = _depositVkey;
         borrowVkey = _borrowVkey;
-        collateralToken = IERC20(_collateralToken);
-        debtToken = IERC20(_debtToken);
+        COLLATERAL_TOKEN = IERC20(_collateralToken);
+        DEBT_TOKEN = IERC20(_debtToken);
         owner = msg.sender;
         
         // Initialize with empty merkle root
@@ -104,10 +124,10 @@ contract AegisVault {
         bytes calldata publicValues
     ) external {
         // Transfer collateral from user
-        collateralToken.safeTransferFrom(msg.sender, address(this), amount);
+        COLLATERAL_TOKEN.safeTransferFrom(msg.sender, address(this), amount);
 
         // Verify the ZK proof
-        verifier.verifyProof(depositVkey, publicValues, proof);
+        VERIFIER.verifyProof(depositVkey, abi.encode(publicValues), proof);
 
         // Decode the commitment from public values
         // publicValues format: DepositOutput { commitment_hash: [u8; 32], is_valid: u8 }
@@ -141,7 +161,7 @@ contract AegisVault {
         bytes calldata publicValues
     ) external {
         // Verify the ZK proof first
-        verifier.verifyProof(borrowVkey, publicValues, proof);
+        VERIFIER.verifyProof(borrowVkey, abi.encode(publicValues), proof);
 
         // Decode public values from proof
         // BorrowOutput format from Rust:
@@ -176,7 +196,9 @@ contract AegisVault {
         // Borrow amount: bytes 84-99 (16 bytes, little-endian u128)
         // Read byte by byte from calldata and convert to big-endian
         for (uint i = 0; i < 16; i++) {
-            borrowAmount |= uint128(uint8(publicValues[84 + i])) << (8 * i);
+            // Safe cast: i is loop counter 0-15, fits in uint128
+            // forge-lint: disable-next-line(unsafe-typecast)
+            borrowAmount |= uint128(uint8(publicValues[84 + i])) << (8 * uint128(i));
         }
         
         // Is valid: byte 100
@@ -189,7 +211,7 @@ contract AegisVault {
         if (nullifiers[nullifierHash]) revert NullifierAlreadySpent();
 
         // Check contract has enough liquidity
-        uint256 balance = debtToken.balanceOf(address(this));
+        uint256 balance = DEBT_TOKEN.balanceOf(address(this));
         if (balance < borrowAmount) revert InsufficientLiquidity();
 
         // Mark nullifier as spent
@@ -201,9 +223,98 @@ contract AegisVault {
         merkleRoot = keccak256(abi.encodePacked(merkleRoot, newCommitment));
 
         // Transfer borrowed funds to recipient
-        debtToken.safeTransfer(recipient, borrowAmount);
+        DEBT_TOKEN.safeTransfer(recipient, borrowAmount);
 
         emit Borrow(nullifierHash, newCommitment, recipient, borrowAmount, block.timestamp);
+        emit MerkleRootUpdated(oldRoot, merkleRoot);
+    }
+
+    /// @notice Borrow via relayer - hides user's wallet address!
+    /// @param userSignature User's signature authorizing the borrow
+    /// @param proof SP1 ZK proof that borrow is valid
+    /// @param publicValues Public outputs from the ZK proof
+    /// @param nonce Unique nonce to prevent replay attacks
+    function borrowViaRelayer(
+        bytes calldata userSignature,
+        bytes calldata proof,
+        bytes calldata publicValues,
+        uint256 nonce
+    ) external {
+        // Create message hash that user signed
+        bytes32 messageHash = keccak256(abi.encodePacked(
+            address(this),  // Contract address
+            proof,
+            publicValues,
+            nonce
+        ));
+        
+        // Convert to Ethereum signed message
+        bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
+        
+        // Recover signer address
+        address actualUser = ECDSA.recover(ethSignedMessageHash, userSignature);
+        
+        // Check signature hasn't been used before
+        bytes32 signatureHash = keccak256(userSignature);
+        if (usedSignatures[signatureHash]) revert SignatureAlreadyUsed();
+        usedSignatures[signatureHash] = true;
+
+        // Verify the ZK proof (same as regular borrow)
+        VERIFIER.verifyProof(borrowVkey, abi.encode(publicValues), proof);
+
+        // Decode public values (same format as regular borrow)
+        bytes32 nullifierHash;
+        bytes32 newCommitment;
+        address recipient;
+        uint128 borrowAmount;
+        uint8 isValid;
+        
+        assembly {
+            nullifierHash := calldataload(publicValues.offset)
+            newCommitment := calldataload(add(publicValues.offset, 32))
+            
+            let addrWord := calldataload(add(publicValues.offset, 64))
+            recipient := shr(96, addrWord)
+        }
+        
+        for (uint i = 0; i < 16; i++) {
+            // Safe cast: i is loop counter 0-15, fits in uint128
+            // forge-lint: disable-next-line(unsafe-typecast)
+            borrowAmount |= uint128(uint8(publicValues[84 + i])) << (8 * uint128(i));
+        }
+        
+        isValid = uint8(publicValues[100]);
+
+        // Validate proof result
+        if (isValid != 1) revert InvalidProof();
+
+        // Check nullifier not already spent
+        if (nullifiers[nullifierHash]) revert NullifierAlreadySpent();
+
+        // Check contract has enough liquidity
+        uint256 balance = DEBT_TOKEN.balanceOf(address(this));
+        if (balance < borrowAmount) revert InsufficientLiquidity();
+
+        // Mark nullifier as spent
+        nullifiers[nullifierHash] = true;
+
+        // Add new commitment to tree
+        commitments.push(newCommitment);
+        bytes32 oldRoot = merkleRoot;
+        merkleRoot = keccak256(abi.encodePacked(merkleRoot, newCommitment));
+
+        // Transfer borrowed funds to recipient (could be different from signer)
+        DEBT_TOKEN.safeTransfer(recipient, borrowAmount);
+
+        // Emit special event showing relayer was used
+        emit BorrowViaRelayer(
+            nullifierHash,
+            newCommitment,
+            actualUser,      // Real user (from signature)
+            msg.sender,      // Relayer address (visible on-chain)
+            borrowAmount,
+            block.timestamp
+        );
         emit MerkleRootUpdated(oldRoot, merkleRoot);
     }
 
@@ -226,19 +337,19 @@ contract AegisVault {
 
     /// @notice Get contract collateral balance
     function getCollateralBalance() external view returns (uint256) {
-        return collateralToken.balanceOf(address(this));
+        return COLLATERAL_TOKEN.balanceOf(address(this));
     }
 
     /// @notice Get contract debt token balance
     function getDebtBalance() external view returns (uint256) {
-        return debtToken.balanceOf(address(this));
+        return DEBT_TOKEN.balanceOf(address(this));
     }
 
     // ============ Admin Functions ============
 
     /// @notice Fund the vault with debt tokens (for testing)
     function fundVault(uint256 amount) external onlyOwner {
-        debtToken.safeTransferFrom(msg.sender, address(this), amount);
+        DEBT_TOKEN.safeTransferFrom(msg.sender, address(this), amount);
     }
 
     /// @notice Update verification keys (emergency use only)
