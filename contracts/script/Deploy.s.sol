@@ -5,7 +5,7 @@ import "forge-std/Script.sol";
 import "../src/AegisVault.sol";
 import "../src/MockTokens.sol";
 import "../test/AegisVault.t.sol";
-import {SP1Verifier} from "@sp1-contracts/v3.0.0/SP1VerifierPlonk.sol";
+import {SP1Verifier} from "@sp1-contracts/v3.0.0/SP1VerifierGroth16.sol";
 
 /// @title Deploy Script for Aegis Protocol
 /// @notice Deploys all contracts for local testing or testnet
@@ -37,7 +37,7 @@ contract DeployScript is Script {
         bool useRealVerifier = vm.envOr("USE_REAL_SP1_VERIFIER", false);
         
         if (useRealVerifier) {
-            console.log("Deploying REAL SP1 Verifier (PLONK)...");
+            console.log("Deploying REAL SP1 Verifier (Groth16)...");
             SP1Verifier realVerifier = new SP1Verifier();
             verifier = address(realVerifier);
             console.log("SP1Verifier deployed at:", verifier);

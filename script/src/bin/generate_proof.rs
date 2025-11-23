@@ -132,16 +132,16 @@ fn generate_deposit_proof(amount_eth: u128, output_file: &str) {
         std::process::exit(1);
     }
 
-    // Generate PLONK proof (no Docker needed)
-    println!("\n🔨 Generating PLONK proof...");
-    println!("⚠️  This may take 5-10 minutes on first run");
-    println!("   Subsequent runs will be faster (~5-8 seconds)\n");
+    // Generate Groth16 proof
+    println!("\n🔨 Generating Groth16 proof...");
+    println!("⚠️  This may take 10-15 minutes on first run");
+    println!("   Subsequent runs will be much faster (~3-5 seconds)\n");
     
     let start = std::time::Instant::now();
     let proof = client.prove(&pk, &stdin)
-        .plonk()
+        .groth16()
         .run()
-        .expect("PLONK proving failed");
+        .expect("Groth16 proving failed");
     
     let elapsed = start.elapsed();
     
@@ -242,16 +242,16 @@ fn generate_borrow_proof(collateral_eth: u128, borrow_usd: u128, output_file: &s
         std::process::exit(1);
     }
 
-    // Generate PLONK proof (no Docker needed)
-    println!("\n🔨 Generating PLONK proof...");
-    println!("⚠️  This may take 5-10 minutes on first run");
-    println!("   Subsequent runs will be faster (~5-8 seconds)\n");
+    // Generate Groth16 proof
+    println!("\n🔨 Generating Groth16 proof...");
+    println!("⚠️  This may take 10-15 minutes on first run");
+    println!("   Subsequent runs will be much faster (~3-5 seconds)\n");
     
     let start = std::time::Instant::now();
     let proof = client.prove(&pk, &stdin)
-        .plonk()
+        .groth16()
         .run()
-        .expect("PLONK proving failed");
+        .expect("Groth16 proving failed");
     
     let elapsed = start.elapsed();
     

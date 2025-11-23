@@ -79,7 +79,7 @@ done
 echo -e "${GREEN}✓ Anvil running (PID: $ANVIL_PID)${NC}\n"
 
 # Step 3: Deploy contracts with real SP1 verifier
-echo -e "${BLUE}[3/5] Deploying contracts with REAL SP1 Verifier...${NC}"
+echo -e "${BLUE}[3/5] Deploying contracts with REAL SP1 Verifier (Groth16)...${NC}"
 cd contracts
 
 export USE_REAL_SP1_VERIFIER=true

@@ -3,21 +3,24 @@ sp1_zkvm::entrypoint!(main);
 
 mod types;
 mod crypto;
+mod transfer;
 
 use types::*;
 use crypto::*;
+use transfer::*;
 
 const BPS_DENOMINATOR: u128 = 10_000;
 
 /// Main entry point for the ZK program
 /// Reads operation type and dispatches to appropriate handler
 pub fn main() {
-    // Read operation type: 0 = deposit, 1 = borrow
+    // Read operation type: 0 = deposit, 1 = borrow, 2 = transfer
     let operation_type: u8 = sp1_zkvm::io::read::<u8>();
 
     match operation_type {
         0 => handle_deposit(),
         1 => handle_borrow(),
+        2 => handle_transfer(),
         _ => {
             // Invalid operation, output failure
             let output = DepositOutput {
@@ -27,6 +30,13 @@ pub fn main() {
             sp1_zkvm::io::commit(&output);
         }
     }
+}
+
+/// Handle transfer operation - verify balance and create transfer proof
+fn handle_transfer() {
+    let input = sp1_zkvm::io::read::<TransferInput>();
+    let output = verify_transfer(&input);
+    sp1_zkvm::io::commit(&output);
 }
 
 /// Handle deposit operation - create initial commitment
