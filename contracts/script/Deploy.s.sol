@@ -2,8 +2,10 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
-import "../src/MockTokens.sol";
 import "../src/AegisVault.sol";
+import "../src/MockTokens.sol";
+import "../test/AegisVault.t.sol";
+import {SP1Verifier} from "@sp1-contracts/v3.0.0/SP1VerifierGroth16.sol";
 
 /// @title Deploy Script for Aegis Protocol
 /// @notice Deploys all contracts for local testing or testnet
@@ -30,10 +32,23 @@ contract DeployScript is Script {
         MockUSDC debtToken = new MockUSDC();
         console.log("MockUSDC deployed at:", address(debtToken));
 
-        // 2. Deploy mock SP1 verifier (for local testing)
-        console.log("Deploying MockSP1Verifier...");
-        MockSP1Verifier verifier = new MockSP1Verifier();
-        console.log("MockSP1Verifier deployed at:", address(verifier));
+        // 2. Deploy SP1 verifier
+        address verifier;
+        bool useRealVerifier = vm.envOr("USE_REAL_SP1_VERIFIER", false);
+        
+        if (useRealVerifier) {
+            console.log("Deploying REAL SP1 Verifier (Groth16)...");
+            SP1Verifier realVerifier = new SP1Verifier();
+            verifier = address(realVerifier);
+            console.log("SP1Verifier deployed at:", verifier);
+            console.log("*** USING REAL ZK PROOF VERIFICATION ***");
+        } else {
+            console.log("Deploying MockSP1Verifier (testing only)...");
+            MockSP1Verifier mockVerifier = new MockSP1Verifier();
+            verifier = address(mockVerifier);
+            console.log("MockSP1Verifier deployed at:", verifier);
+            console.log("*** WARNING: Proofs are NOT verified! ***");
+        }
 
         // 3. Set verification keys (mock values for testing)
         bytes32 depositVkey = keccak256("DEPOSIT_VKEY_V1");
@@ -71,9 +86,18 @@ contract DeployScript is Script {
         console.log("=================================");
         console.log("MockETH:", address(collateralToken));
         console.log("MockUSDC:", address(debtToken));
-        console.log("MockSP1Verifier:", address(verifier));
+        if (useRealVerifier) {
+            console.log("SP1Verifier (REAL):", verifier);
+        } else {
+            console.log("MockSP1Verifier:", verifier);
+        }
         console.log("AegisVault:", address(vault));
         console.log("=================================");
+        if (useRealVerifier) {
+            console.log("*** Using REAL SP1 verification ***");
+        } else {
+            console.log("*** Using MOCK verifier (testing only) ***");
+        }
         
         // Save addresses to file for prover script
         string memory addresses = string(abi.encodePacked(
@@ -84,17 +108,5 @@ contract DeployScript is Script {
         ));
         vm.writeFile(".env.contracts", addresses);
         console.log("\nAddresses saved to .env.contracts");
-    }
-}
-
-/// @notice Mock SP1 Verifier for local testing
-contract MockSP1Verifier {
-    function verifyProof(
-        bytes32, // vkey
-        bytes calldata, // publicValues
-        bytes calldata // proofBytes
-    ) external pure {
-        // Always pass for local testing
-        return;
     }
 }

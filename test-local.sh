@@ -101,7 +101,16 @@ fi
 # Step 2: Deploy contracts
 echo -e "\n${BLUE}[2/4] Deploying contracts...${NC}"
 cd contracts
-forge script script/Deploy.s.sol:DeployScript --rpc-url http://127.0.0.1:8545 --broadcast --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+# Use real SP1 verifier in fork mode
+if [ "$FORK_MODE" = true ]; then
+    echo -e "${YELLOW}Deploying with REAL SP1 Verifier...${NC}"
+    export USE_REAL_SP1_VERIFIER=true
+    forge script script/Deploy.s.sol:DeployScript --rpc-url http://127.0.0.1:8545 --broadcast --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+else
+    echo -e "${YELLOW}Deploying with MockVerifier (local mode)...${NC}"
+    forge script script/Deploy.s.sol:DeployScript --rpc-url http://127.0.0.1:8545 --broadcast --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+fi
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Contracts deployed${NC}"
@@ -150,6 +159,10 @@ echo -e "\n${BLUE}Test suite complete!${NC}"
 if [ "$FORK_MODE" = true ]; then
     echo -e "${YELLOW}🌐 Fork mode: Tested against Mantle Sepolia state${NC}"
     echo -e "${YELLOW}   Fork log: anvil-fork.log${NC}"
+    echo -e "${GREEN}   Verifier: REAL SP1 (Groth16)${NC}"
+    echo -e "${GREEN}   ✓ Proofs are cryptographically verified!${NC}"
+else
+    echo -e "${YELLOW}   Verifier: MockSP1Verifier (local only)${NC}"
 fi
 
 echo -e "${YELLOW}Deployed contracts available at:${NC}"
